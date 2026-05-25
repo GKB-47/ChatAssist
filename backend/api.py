@@ -1,0 +1,78 @@
+from fastapi import FastAPI, UploadFile, File, Form
+from rag import ask_question
+from pypdf import PdfReader
+import tempfile
+
+app = FastAPI()
+
+# ======================================================
+# HOME
+# ======================================================
+
+@app.get("/")
+def home():
+
+    return {
+        "message": "CloudInvent AI Copilot Backend Running"
+    }
+
+# ======================================================
+# CHAT API
+# ======================================================
+
+@app.post("/chat")
+async def chat(
+
+    question: str = Form(...),
+
+    file: UploadFile = File(None)
+
+):
+
+    pdf_text = ""
+
+    # ==================================================
+    # PROCESS PDF
+    # ==================================================
+
+    if file:
+
+        try:
+
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=".pdf"
+            ) as temp_file:
+
+                contents = await file.read()
+
+                temp_file.write(contents)
+
+                temp_path = temp_file.name
+
+            reader = PdfReader(temp_path)
+
+            for page in reader.pages:
+
+                extracted = page.extract_text()
+
+                if extracted:
+
+                    pdf_text += extracted + "\n"
+
+        except Exception as e:
+
+            pdf_text = f"PDF processing error: {str(e)}"
+
+    # ==================================================
+    # ASK QUESTION
+    # ==================================================
+
+    answer = ask_question(
+        question,
+        pdf_text
+    )
+
+    return {
+        "answer": answer
+    }
