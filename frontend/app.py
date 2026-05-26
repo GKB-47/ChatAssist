@@ -163,16 +163,32 @@ if prompt:
                     )
                 }
 
+            payload = {
+                "question": str(prompt)
+            }
+
             response = requests.post(
+
                 "https://chatassist-backend-auta.onrender.com/chat",
-                data={
-                    "question": prompt
-                },
-                files=files,
+
+                data=payload,
+
+                files=files if uploaded_file else None,
+
                 timeout=120
             )
 
-            answer = response.json()["answer"]
+            if response.status_code != 200:
+                st.error(response.text)
+                st.stop()
+
+            try:
+                data = response.json()
+                answer = data["answer"]
+            except Exception:
+                st.error("Invalid response from backend")
+                st.code(response.text)
+                st.stop()
 
             st.markdown(answer)
 
