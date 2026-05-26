@@ -3,6 +3,14 @@ from rag import ask_question
 from pypdf import PdfReader
 import tempfile
 
+
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+from rag import ask_question
+
+
+
 app = FastAPI()
 
 # ======================================================
@@ -72,6 +80,54 @@ async def chat(
         question,
         pdf_text
     )
+
+    return {
+        "answer": answer
+    }
+
+
+# ======================================================
+# CORS
+# ======================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ======================================================
+# REQUEST MODEL
+# ======================================================
+
+class QuestionRequest(BaseModel):
+
+    question: str
+
+# ======================================================
+# HEALTH CHECK
+# ======================================================
+
+@app.get("/")
+
+def root():
+
+    return {
+        "status": "CloudInvent AI Backend Running"
+    }
+
+
+# ======================================================
+# CHAT ENDPOINT
+# ======================================================
+
+@app.post("/chat")
+
+def chat(request: QuestionRequest):
+
+    answer = ask_question(request.question)
 
     return {
         "answer": answer
