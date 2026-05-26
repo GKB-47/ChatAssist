@@ -1,203 +1,188 @@
 import streamlit as st
 import requests
 
+# ======================================================
+# PAGE CONFIG
+# ======================================================
+
 st.set_page_config(
     page_title="CloudInvent AI Copilot",
+    page_icon="☁️",
     layout="wide"
 )
 
-import os
+# ======================================================
+# CUSTOM CSS
+# ======================================================
 
-logo_path = os.path.join(
-    os.path.dirname(__file__),
-    "logo.png"
-)
+st.markdown("""
+<style>
 
-if os.path.exists(logo_path):
+.main {
+    padding-top: 1rem;
+}
 
-    st.image(logo_path, width=180)
+.stTextInput > div > div > input {
+    font-size: 16px;
+}
+
+.sample-question button {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ======================================================
+# TITLE
+# ======================================================
 
 st.title("☁️ CloudInvent AI Copilot")
 
+st.markdown("""
+Ask questions about:
+
+- Cloud FinOps
+- Cloud Cost Optimization
+- Governance
+- Cloud Migration
+- AI Solutions
+- CloudInvent Services
+""")
 
 # ======================================================
-# SIMPLE LOGIN
+# BACKEND API
 # ======================================================
 
-APP_PASSWORD = "cloudinvent123"
-
-password = st.sidebar.text_input(
-    "Enter Password",
-    type="password"
-)
-
-if password != APP_PASSWORD:
-
-    st.warning("Please enter password.")
-
-    st.stop()
-
-
-st.title("☁️ CloudInvent AI Copilot")
+API_URL = "https://chatassist-backend-auta.onrender.com/chat"
+#API_URL = "http://localhost:8000/chat"
+#API_URL = "https://127.0.0.1/chat"
 
 # ======================================================
-# CHAT HISTORY
+# SESSION STATE
 # ======================================================
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# ======================================================
-# DISPLAY CHAT HISTORY
-# ======================================================
-
-for message in st.session_state.messages:
-
-    with st.chat_message(message["role"]):
-
-        st.markdown(message["content"])
-
-# ======================================================
-# PDF UPLOAD
-# ======================================================
-
-uploaded_file = st.sidebar.file_uploader(
-    "Upload PDF",
-    type=["pdf"]
-)
+if "question" not in st.session_state:
+    st.session_state.question = ""
 
 # ======================================================
 # SAMPLE QUESTIONS
 # ======================================================
 
-st.markdown("### 🚀 Try Sample Questions")
-
-sample_prompt = None
+st.subheader("💡 Sample Questions")
 
 col1, col2 = st.columns(2)
 
 with col1:
 
-    if st.button(
-        "☁️ What does CloudInvent do?",
-        use_container_width=True
-    ):
-
-        sample_prompt = (
-            "What does CloudInvent do?"
+    if st.button("What services does CloudInvent provide?"):
+        st.session_state.question = (
+            "What services does CloudInvent provide?"
         )
 
-    if st.button(
-        "💰 Explain FinOps capabilities",
-        use_container_width=True
-    ):
-
-        sample_prompt = (
-            "Explain CloudInvent FinOps capabilities"
+    if st.button("How does CloudInvent help optimize cloud costs?"):
+        st.session_state.question = (
+            "How does CloudInvent help optimize cloud costs?"
         )
 
 with col2:
 
-    if st.button(
-        "📉 How are cloud costs optimized?",
-        use_container_width=True
-    ):
-
-        sample_prompt = (
-            "How does CloudInvent optimize cloud costs?"
+    if st.button("What is Cloud FinOps?"):
+        st.session_state.question = (
+            "What is Cloud FinOps?"
         )
 
-    if st.button(
-        "🔐 Explain governance and security",
-        use_container_width=True
-    ):
-
-        sample_prompt = (
-            "Explain CloudInvent governance and security capabilities"
+    if st.button("Tell me about CloudInvent AI solutions"):
+        st.session_state.question = (
+            "Tell me about CloudInvent AI solutions"
         )
 
 # ======================================================
-# CHAT INPUT
+# USER INPUT
 # ======================================================
 
-prompt = st.chat_input(
-    "Ask anything about CloudInvent"
+prompt = st.text_input(
+    "Enter your question",
+    value=st.session_state.question
 )
 
 # ======================================================
-# USE SAMPLE QUESTION
+# ASK BUTTON
 # ======================================================
 
-if sample_prompt:
+if st.button("Ask AI"):
 
-    prompt = sample_prompt
+    if not prompt.strip():
 
-# ======================================================
-# PROCESS QUESTION
-# ======================================================
+        st.warning("Please enter a question.")
 
-if prompt:
+    else:
 
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": prompt
-        }
-    )
+        with st.spinner("Thinking..."):
 
-    with st.chat_message("user"):
+            try:
 
-        st.markdown(prompt)
+                response = requests.post(
 
-    with st.chat_message("assistant"):
+                    API_URL,
 
-        try:
+                    json={
+                        "question": prompt
+                    },
 
-            files = None
+                    timeout=120
+                )
 
-            if uploaded_file:
+                # ======================================================
+                # DEBUG INFO
+                # ======================================================
 
-                files = {
-                    "file": (
-                        uploaded_file.name,
-                        uploaded_file,
-                        "application/pdf"
+                st.write("### Debug Info")
+
+                st.write(
+                    f"Status Code: {response.status_code}"
+                )
+
+                st.write("Raw Response:")
+
+                st.code(response.text)
+
+                # ======================================================
+                # CHECK RESPONSE
+                # ======================================================
+
+                if response.status_code == 200:
+
+                    data = response.json()
+
+                    answer = data.get(
+                        "answer",
+                        "No answer returned."
                     )
-                }
 
-            # ======================================================
-            # BACKEND API
-            # ======================================================
+                    st.success("Answer")
 
-            API_URL = "https://cloudinvent-backend.onrender.com/chat"
-            #API_URL = "http://localhost:8000/chat"
-            #API_URL = "http://127.0.0.1:8000/chat"
+                    st.write(answer)
 
-            response = requests.post(
+                else:
 
-            API_URL,
+                    st.error(
+                        "Backend returned an error."
+                    )
 
-            json={
-            "question": prompt
-            },
+            except Exception as e:
 
-            timeout=120
-            )
+                st.error(
+                    f"Error: {str(e)}"
+                )
 
+# ======================================================
+# FOOTER
+# ======================================================
 
-            answer = response.json()["answer"]
+st.markdown("---")
 
-            st.markdown(answer)
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-        except Exception as e:
-
-            st.error(str(e))
-
-
+st.caption(
+    "Powered by Groq + Llama 3 + FastAPI + Streamlit"
+)
