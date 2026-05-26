@@ -6,19 +6,7 @@ st.set_page_config(
     layout="wide"
 )
 
-import os
-
-logo_path = os.path.join(
-    os.path.dirname(__file__),
-    "logo.png"
-)
-
-if os.path.exists(logo_path):
-
-    st.image(logo_path, width=180)
-
-st.title("☁️ CloudInvent AI Copilot")
-
+st.logo("logo.png")
 
 # ======================================================
 # SIMPLE LOGIN
@@ -188,4 +176,3 @@ if prompt:
         except Exception as e:
 
             st.error(str(e))
-
