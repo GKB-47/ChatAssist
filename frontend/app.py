@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.logo("logo.png")
+st.image("logo.png", width=180)
 
 # ======================================================
 # SIMPLE LOGIN
