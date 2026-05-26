@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 
 # ======================================================
 # PAGE CONFIG
@@ -7,32 +8,21 @@ import requests
 
 st.set_page_config(
     page_title="CloudInvent AI Copilot",
-    page_icon="☁️",
     layout="wide"
 )
 
 # ======================================================
-# CUSTOM CSS
+# LOGO
 # ======================================================
 
-st.markdown("""
-<style>
+logo_path = os.path.join(
+    os.path.dirname(__file__),
+    "logo.png"
+)
 
-.main {
-    padding-top: 1rem;
-}
+if os.path.exists(logo_path):
 
-.stTextInput > div > div > input {
-    font-size: 16px;
-}
-
-.sample-question button {
-    width: 100%;
-    margin-bottom: 8px;
-}
-
-</style>
-""", unsafe_allow_html=True)
+    st.image(logo_path, width=180)
 
 # ======================================================
 # TITLE
@@ -40,142 +30,251 @@ st.markdown("""
 
 st.title("☁️ CloudInvent AI Copilot")
 
-st.markdown("""
-Ask questions about:
-
-- Cloud FinOps
-- Cloud Cost Optimization
-- Governance
-- Cloud Migration
-- AI Solutions
-- CloudInvent Services
-""")
-
 # ======================================================
-# BACKEND API
+# SIMPLE LOGIN
 # ======================================================
 
-API_URL = "https://chatassist-backend-auta.onrender.com/chat"
-#API_URL = "http://localhost:8000/chat"
-#API_URL = "https://127.0.0.1/chat"
+APP_PASSWORD = "cloudinvent123"
+
+password = st.sidebar.text_input(
+    "Enter Password",
+    type="password"
+)
+
+if password != APP_PASSWORD:
+
+    st.warning("Please enter password.")
+
+    st.stop()
 
 # ======================================================
-# SESSION STATE
+# CHAT HISTORY
 # ======================================================
 
-if "question" not in st.session_state:
-    st.session_state.question = ""
+if "messages" not in st.session_state:
+
+    st.session_state.messages = []
+
+# ======================================================
+# DISPLAY CHAT HISTORY
+# ======================================================
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+
+        st.markdown(message["content"])
+
+# ======================================================
+# PDF UPLOAD
+# ======================================================
+
+uploaded_file = st.sidebar.file_uploader(
+    "Upload PDF",
+    type=["pdf"]
+)
 
 # ======================================================
 # SAMPLE QUESTIONS
 # ======================================================
 
-st.subheader("💡 Sample Questions")
+st.markdown("### 🚀 Try Sample Questions")
+
+sample_prompt = None
 
 col1, col2 = st.columns(2)
 
 with col1:
 
-    if st.button("What services does CloudInvent provide?"):
-        st.session_state.question = (
-            "What services does CloudInvent provide?"
+    if st.button(
+        "☁️ What does CloudInvent do?",
+        use_container_width=True
+    ):
+
+        sample_prompt = (
+            "What does CloudInvent do?"
         )
 
-    if st.button("How does CloudInvent help optimize cloud costs?"):
-        st.session_state.question = (
-            "How does CloudInvent help optimize cloud costs?"
+    if st.button(
+        "💰 Explain FinOps capabilities",
+        use_container_width=True
+    ):
+
+        sample_prompt = (
+            "Explain CloudInvent FinOps capabilities"
         )
 
 with col2:
 
-    if st.button("What is Cloud FinOps?"):
-        st.session_state.question = (
-            "What is Cloud FinOps?"
+    if st.button(
+        "📉 How are cloud costs optimized?",
+        use_container_width=True
+    ):
+
+        sample_prompt = (
+            "How does CloudInvent optimize cloud costs?"
         )
 
-    if st.button("Tell me about CloudInvent AI solutions"):
-        st.session_state.question = (
-            "Tell me about CloudInvent AI solutions"
+    if st.button(
+        "🔐 Explain governance and security",
+        use_container_width=True
+    ):
+
+        sample_prompt = (
+            "Explain CloudInvent governance and security capabilities"
         )
 
 # ======================================================
-# USER INPUT
+# CHAT INPUT
 # ======================================================
 
-prompt = st.text_input(
-    "Enter your question",
-    value=st.session_state.question
+prompt = st.chat_input(
+    "Ask anything about CloudInvent"
 )
 
 # ======================================================
-# ASK BUTTON
+# USE SAMPLE QUESTION
 # ======================================================
 
-if st.button("Ask AI"):
+if sample_prompt:
 
-    if not prompt.strip():
+    prompt = sample_prompt
 
-        st.warning("Please enter a question.")
+# ======================================================
+# PROCESS QUESTION
+# ======================================================
 
-    else:
+if prompt:
 
-        with st.spinner("Thinking..."):
+    # ==================================================
+    # ADD USER MESSAGE
+    # ==================================================
+
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": prompt
+        }
+    )
+
+    with st.chat_message("user"):
+
+        st.markdown(prompt)
+
+    # ==================================================
+    # ASSISTANT RESPONSE
+    # ==================================================
+
+    with st.chat_message("assistant"):
+
+        try:
+
+            # ==========================================
+            # BACKEND API
+            # ==========================================
+
+            API_URL = (
+                "https://chatassist-backend-auta.onrender.com/chat"
+            )
+
+            # ==========================================
+            # API CALL
+            # ==========================================
+
+            response = requests.post(
+
+                API_URL,
+
+                json={
+                    "question": prompt
+                },
+
+                timeout=120
+            )
+
+            # ==========================================
+            # DEBUGGING
+            # ==========================================
+
+            st.sidebar.markdown("### Debug Info")
+
+            st.sidebar.write(
+                f"Status Code: {response.status_code}"
+            )
+
+            # ==========================================
+            # VALIDATE RESPONSE
+            # ==========================================
+
+            if response.status_code != 200:
+
+                st.error(
+                    f"Backend Error: {response.text}"
+                )
+
+                st.stop()
+
+            # ==========================================
+            # SAFE JSON PARSING
+            # ==========================================
 
             try:
 
-                response = requests.post(
+                data = response.json()
 
-                    API_URL,
+            except Exception:
 
-                    json={
-                        "question": prompt
-                    },
-
-                    timeout=120
+                st.error(
+                    "Invalid JSON response from backend."
                 )
-
-                # ======================================================
-                # DEBUG INFO
-                # ======================================================
-
-                st.write("### Debug Info")
-
-                st.write(
-                    f"Status Code: {response.status_code}"
-                )
-
-                st.write("Raw Response:")
 
                 st.code(response.text)
 
-                # ======================================================
-                # CHECK RESPONSE
-                # ======================================================
+                st.stop()
 
-                if response.status_code == 200:
+            # ==========================================
+            # GET ANSWER
+            # ==========================================
 
-                    data = response.json()
+            answer = data.get(
+                "answer",
+                "No answer returned."
+            )
 
-                    answer = data.get(
-                        "answer",
-                        "No answer returned."
-                    )
+            # ==========================================
+            # DISPLAY ANSWER
+            # ==========================================
 
-                    st.success("Answer")
+            st.markdown(answer)
 
-                    st.write(answer)
+            # ==========================================
+            # SAVE CHAT HISTORY
+            # ==========================================
 
-                else:
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": answer
+                }
+            )
 
-                    st.error(
-                        "Backend returned an error."
-                    )
+        except requests.exceptions.Timeout:
 
-            except Exception as e:
+            st.error(
+                "Request timed out. Render free tier may be waking up."
+            )
 
-                st.error(
-                    f"Error: {str(e)}"
-                )
+        except requests.exceptions.ConnectionError:
+
+            st.error(
+                "Could not connect to backend service."
+            )
+
+        except Exception as e:
+
+            st.error(
+                f"Unexpected Error: {str(e)}"
+            )
 
 # ======================================================
 # FOOTER
