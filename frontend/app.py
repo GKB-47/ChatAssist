@@ -47,15 +47,7 @@ st.title("☁️ CloudInvent AI Copilot")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ======================================================
-# DISPLAY CHAT HISTORY
-# ======================================================
 
-for message in st.session_state.messages:
-
-    with st.chat_message(message["role"]):
-
-        st.markdown(message["content"])
 
 # ======================================================
 # PDF UPLOAD
@@ -115,6 +107,16 @@ with col2:
         sample_prompt = (
             "Explain CloudInvent governance and security capabilities"
         )
+
+# ======================================================
+# DISPLAY CHAT HISTORY
+# ======================================================
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+
+        st.markdown(message["content"])
 
 # ======================================================
 # CHAT INPUT
@@ -180,13 +182,24 @@ if prompt:
                 timeout=120
             )
 
-            answer = response.json()["answer"]
-            st.markdown(answer)
+            #answer = response.json()["answer"]
+            #st.markdown(answer)
+
+            st.write("Status Code:", response.status_code)
+            st.write("Raw Response:")
+            st.code(response.text)
+            if response.status_code != 200:
+                st.stop()
+            data = response.json()
+            answer = data["answer"]
+
+
+
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": answer
+                    #"content": answer
                 }
             )
 
