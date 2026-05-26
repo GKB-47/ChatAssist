@@ -165,25 +165,14 @@ if prompt:
                     )
                 }
 
-            # ======================================================
-            # BACKEND API
-            # ======================================================
-
-            API_URL = "https://cloudinvent-backend.onrender.com/chat"
-            #API_URL = "http://localhost:8000/chat"
-            #API_URL = "http://127.0.0.1:8000/chat"
-
             response = requests.post(
-
-            API_URL,
-
-            json={
-            "question": prompt
-            },
-
-            timeout=120
+                "http://127.0.0.1:8000/chat",
+                data={
+                    "question": prompt
+                },
+                files=files,
+                timeout=120
             )
-
 
             answer = response.json()["answer"]
 
