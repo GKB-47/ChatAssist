@@ -6,7 +6,19 @@ st.set_page_config(
     layout="wide"
 )
 
-st.image("logo.png", width=180)
+import os
+
+logo_path = os.path.join(
+    os.path.dirname(__file__),
+    "logo.png"
+)
+
+if os.path.exists(logo_path):
+
+    st.image(logo_path, width=180)
+
+st.title("☁️ CloudInvent AI Copilot")
+
 
 # ======================================================
 # SIMPLE LOGIN
