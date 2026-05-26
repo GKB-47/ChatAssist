@@ -165,7 +165,7 @@ if prompt:
 
             response = requests.post(
                 "https://chatassist-backend-auta.onrender.com/chat",
-                json={
+                data={
                     "question": prompt
                 },
                 files=files,
