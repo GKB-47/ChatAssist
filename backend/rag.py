@@ -74,7 +74,7 @@ def retrieve_context(question):
 # MAIN FUNCTION
 # =====================================================
 
-def ask_question(question):
+def ask_question(question, pdf_text=""):
 
     context = retrieve_context(question)
 
@@ -83,8 +83,11 @@ def ask_question(question):
 
     Use ONLY the context below.
 
-    Context:
+    Website Context:
     {context}
+
+    PDF Context:
+    {pdf_text}
 
     Question:
     {question}
