@@ -12,7 +12,14 @@ client = Groq(
 # LOAD KNOWLEDGE BASE
 # =====================================================
 
-with open("../data/cloudinvent_docs.txt", "r", encoding="utf-8") as f:
+BASE_DIR = os.path.dirname(__file__)
+
+docs_path = os.path.join(
+    BASE_DIR,
+    "cloudinvent_docs.txt"
+)
+
+with open(docs_path, "r", encoding="utf-8") as f:
 
     knowledge_base = f.read()
 
