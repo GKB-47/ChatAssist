@@ -19,9 +19,21 @@ docs_path = os.path.join(
     "cloudinvent_docs.txt"
 )
 
-with open(docs_path, "r", encoding="utf-8") as f:
+if os.path.exists(docs_path):
 
-    knowledge_base = f.read()
+    with open(docs_path, "r", encoding="utf-8") as f:
+
+        knowledge_base = f.read()
+
+else:
+
+    knowledge_base = """
+    CloudInvent provides cloud migration,
+    FinOps optimization,
+    governance,
+    security,
+    and cloud transformation services.
+    """
 
 # =====================================================
 # SIMPLE RETRIEVAL
@@ -67,31 +79,37 @@ def ask_question(question):
     context = retrieve_context(question)
 
     prompt = f"""
-You are CloudInvent AI Copilot.
+    You are CloudInvent AI Copilot.
 
-Use ONLY the context below.
+    Use ONLY the context below.
 
-Context:
-{context}
+    Context:
+    {context}
 
-Question:
-{question}
+    Question:
+    {question}
 
-Answer professionally.
-"""
+    Answer professionally.
+    """
 
-    completion = client.chat.completions.create(
+    try:
 
-        model="llama-3.3-70b-versatile",
+        completion = client.chat.completions.create(
 
-        messages=[
-            {
+            model="llama3-8b-8192",
+
+            messages=[
+                {
                 "role": "user",
                 "content": prompt
-            }
-        ],
+                }
+            ],
 
-        temperature=0.3,
-    )
+            temperature=0.3,
+        )
 
-    return completion.choices[0].message.content
+        return completion.choices[0].message.content
+
+    except Exception as e:
+
+        return f"Groq API Error: {str(e)}"
