@@ -98,37 +98,3 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ======================================================
-# REQUEST MODEL
-# ======================================================
-
-class QuestionRequest(BaseModel):
-
-    question: str
-
-# ======================================================
-# HEALTH CHECK
-# ======================================================
-
-@app.get("/")
-
-def root():
-
-    return {
-        "status": "CloudInvent AI Backend Running"
-    }
-
-
-# ======================================================
-# CHAT ENDPOINT
-# ======================================================
-
-@app.post("/chat")
-
-def chat(request: QuestionRequest):
-
-    answer = ask_question(request.question)
-
-    return {
-        "answer": answer
-    }
