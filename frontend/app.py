@@ -118,7 +118,9 @@ with col2:
 # CHAT INPUT
 # ======================================================
 
-prompt = st.chat_input(
+prompt = sample_prompt
+
+user_input = st.chat_input(
     "Ask anything about CloudInvent"
 )
 
@@ -126,9 +128,9 @@ prompt = st.chat_input(
 # USE SAMPLE QUESTION
 # ======================================================
 
-if sample_prompt:
+if user_input:
 
-    prompt = sample_prompt
+    prompt = user_input
 
 # ======================================================
 # PROCESS QUESTION
@@ -163,33 +165,21 @@ if prompt:
                     )
                 }
 
-            payload = {
-                "question": str(prompt)
-            }
+            
 
             response = requests.post(
+                API_URL ="https://chatassist-backend-auta.onrender.com/chat",
 
-                "https://chatassist-backend-auta.onrender.com/chat",
-
-                data=payload,
+                data={
+                "question": prompt
+                },
 
                 files=files if uploaded_file else None,
-
                 timeout=120
             )
 
-            if response.status_code != 200:
-                st.error(response.text)
-                st.stop()
-
-            try:
-                data = response.json()
-                answer = data["answer"]
-            except Exception:
-                st.error("Invalid response from backend")
-                st.code(response.text)
-                st.stop()
-
+          
+            answer = response.json()["answer"]
             st.markdown(answer)
 
             st.session_state.messages.append(
