@@ -1,55 +1,12 @@
 import streamlit as st
 import requests
-import os
-from PIL import Image
-
-
-# ======================================================
-# PAGE CONFIG
-# ======================================================
 
 st.set_page_config(
     page_title="CloudInvent AI Copilot",
     layout="wide"
 )
 
-API_URL = "https://cloudinvent-backend.onrender.com/chat"
-
-# ======================================================
-# TITLE
-# ======================================================
-
-st.title("☁️ CloudInvent AI Copilot")
-
-
-
-# ======================================================
-# LOGO
-# ======================================================
-
-current_dir = os.path.dirname(__file__)
-
-logo_path = os.path.join(
-    current_dir,
-    "logo.png"
-)
-
-if os.path.exists(logo_path):
-
-    logo = Image.open(logo_path)
-
-    st.image(logo, width=180)
-
-else:
-
-    st.warning(
-        f"Logo not found at: {logo_path}"
-    )
-
-
-
-
-
+st.logo("logo.png")
 
 # ======================================================
 # SIMPLE LOGIN
@@ -68,6 +25,8 @@ if password != APP_PASSWORD:
 
     st.stop()
 
+
+st.title("☁️ CloudInvent AI Copilot")
 
 # ======================================================
 # CHAT HISTORY
@@ -149,61 +108,17 @@ with col2:
 # CHAT INPUT
 # ======================================================
 
-prompt = sample_prompt
-
-user_input = st.chat_input(
+prompt = st.chat_input(
     "Ask anything about CloudInvent"
 )
-
-# ======================================================
-# BUTTON
-# ======================================================
-
-if st.button("Ask"):
-
-    if prompt:
-
-        with st.spinner("Thinking..."):
-
-            try:
-
-                response = requests.post(
-
-                    API_URL,
-
-                    json={
-                        "question": prompt
-                    },
-
-                    timeout=120
-                )
-
-                # DEBUGGING
-                st.write("Status Code:", response.status_code)
-
-                st.write("Raw Response:")
-
-                st.code(response.text)
-
-                # JSON PARSE
-                data = response.json()
-
-                # SHOW ANSWER
-                st.success(data["answer"])
-
-            except Exception as e:
-
-                st.error(f"Error: {e}")
-
-
 
 # ======================================================
 # USE SAMPLE QUESTION
 # ======================================================
 
-if user_input:
+if sample_prompt:
 
-    prompt = user_input
+    prompt = sample_prompt
 
 # ======================================================
 # PROCESS QUESTION
@@ -238,50 +153,26 @@ if prompt:
                     )
                 }
 
-            # ======================================================
-            # BACKEND API
-            # ======================================================
-
-            payload = {
-            "question": str(prompt)
-            }
-
             response = requests.post(
-
-            API_URL,
-
-            json=payload,
-
-            headers={
-            "Content-Type": "application/json"
-            },
-
-            timeout=120
+                "http://127.0.0.1:8000/chat",
+                data={
+                    "question": prompt
+                },
+                files=files,
+                timeout=120
             )
-            #answer = response.json()["answer"]
-            #st.markdown(answer)
 
-            #data = response.json()
-            #st.write(data["answer"])
+            answer = response.json()["answer"]
+
+            st.markdown(answer)
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": data["answer"]
+                    "content": answer
                 }
             )
 
         except Exception as e:
 
             st.error(str(e))
-
-
-# ======================================================
-# FOOTER
-# ======================================================
-
-st.markdown("---")
-
-st.caption(
-    "Powered by Groq + Llama 3 + FastAPI + Streamlit"
-)
