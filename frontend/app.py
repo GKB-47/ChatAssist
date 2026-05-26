@@ -8,6 +8,7 @@ import os
 
 st.set_page_config(
     page_title="CloudInvent AI Copilot",
+    page_icon="☁️",
     layout="wide"
 )
 
@@ -30,6 +31,18 @@ if os.path.exists(logo_path):
 
 st.title("☁️ CloudInvent AI Copilot")
 
+st.markdown("""
+Ask questions about:
+
+- Cloud FinOps
+- Cloud Cost Optimization
+- Governance
+- Cloud Migration
+- Security
+- AI Solutions
+- CloudInvent Services
+""")
+
 # ======================================================
 # SIMPLE LOGIN
 # ======================================================
@@ -46,6 +59,14 @@ if password != APP_PASSWORD:
     st.warning("Please enter password.")
 
     st.stop()
+
+# ======================================================
+# BACKEND API
+# ======================================================
+
+API_URL = (
+    "https://chatassist-backend-auta.onrender.com/chat"
+)
 
 # ======================================================
 # CHAT HISTORY
@@ -78,7 +99,7 @@ uploaded_file = st.sidebar.file_uploader(
 # SAMPLE QUESTIONS
 # ======================================================
 
-st.markdown("### 🚀 Try Sample Questions")
+st.markdown("## 🚀 Try Sample Questions")
 
 sample_prompt = None
 
@@ -128,17 +149,15 @@ with col2:
 # CHAT INPUT
 # ======================================================
 
-prompt = st.chat_input(
+prompt = sample_prompt
+
+user_input = st.chat_input(
     "Ask anything about CloudInvent"
 )
 
-# ======================================================
-# USE SAMPLE QUESTION
-# ======================================================
+if user_input:
 
-if sample_prompt:
-
-    prompt = sample_prompt
+    prompt = user_input
 
 # ======================================================
 # PROCESS QUESTION
@@ -170,12 +189,26 @@ if prompt:
         try:
 
             # ==========================================
-            # BACKEND API
+            # PREPARE PAYLOAD
             # ==========================================
 
-            API_URL = (
-                "https://chatassist-backend-auta.onrender.com/chat"
-            )
+            payload = {
+                "question": str(prompt)
+            }
+
+            # ==========================================
+            # DEBUGGING
+            # ==========================================
+
+            st.sidebar.markdown("### Debug Info")
+
+            st.sidebar.write("API URL:")
+
+            st.sidebar.code(API_URL)
+
+            st.sidebar.write("Payload Sent:")
+
+            st.sidebar.json(payload)
 
             # ==========================================
             # API CALL
@@ -185,25 +218,25 @@ if prompt:
 
                 API_URL,
 
-                json={
-                    "question": prompt
+                json=payload,
+
+                headers={
+                    "Content-Type": "application/json"
                 },
 
                 timeout=120
             )
 
             # ==========================================
-            # DEBUGGING
+            # DEBUG STATUS
             # ==========================================
-
-            st.sidebar.markdown("### Debug Info")
 
             st.sidebar.write(
                 f"Status Code: {response.status_code}"
             )
 
             # ==========================================
-            # VALIDATE RESPONSE
+            # HANDLE ERRORS
             # ==========================================
 
             if response.status_code != 200:
