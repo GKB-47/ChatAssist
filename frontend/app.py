@@ -169,18 +169,17 @@ if prompt:
 
             
 
+            API_URL = "https://chatassist-backend-auta.onrender.com/chat"
+
             response = requests.post(
-                API_URL ="https://chatassist-backend-auta.onrender.com/chat",
-
+                API_URL,
                 data={
-                "question": prompt
+                    "question": prompt
                 },
-
                 files=files if uploaded_file else None,
                 timeout=120
             )
 
-          
             answer = response.json()["answer"]
             st.markdown(answer)
 
