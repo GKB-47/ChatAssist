@@ -7,8 +7,6 @@ st.set_page_config(
     layout="wide"
 )
 
-
-
 logo_path = os.path.join(
     os.path.dirname(__file__),
     "logo.png"
@@ -16,7 +14,7 @@ logo_path = os.path.join(
 
 if os.path.exists(logo_path):
 
-    st.image(logo_path, width=180)
+    st.sidebar.image(logo_path, width=180)
 
 # ======================================================
 # SIMPLE LOGIN
@@ -29,9 +27,13 @@ password = st.sidebar.text_input(
     type="password"
 )
 
+if not password:
+
+    st.stop()
+
 if password != APP_PASSWORD:
 
-    st.warning("Please enter password.")
+    st.sidebar.error("Incorrect password")
 
     st.stop()
 
