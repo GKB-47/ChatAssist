@@ -1,195 +1,90 @@
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+import os
 from groq import Groq
 from dotenv import load_dotenv
-import os
-
-# =========================================================
-# LOAD ENV VARIABLES
-# =========================================================
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-# =========================================================
-# GROQ CLIENT
-# =========================================================
-
 client = Groq(
-    api_key=GROQ_API_KEY
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
-# =========================================================
-# EMBEDDING MODEL
-# =========================================================
+# =====================================================
+# LOAD KNOWLEDGE BASE
+# =====================================================
 
-embedding = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+with open("../data/cloudinvent_docs.txt", "r", encoding="utf-8") as f:
 
-# =========================================================
-# CHROMA VECTOR DATABASE
-# =========================================================
+    knowledge_base = f.read()
 
-db = Chroma(
-    persist_directory="./chroma_db",
-    embedding_function=embedding
-)
+# =====================================================
+# SIMPLE RETRIEVAL
+# =====================================================
 
-# =========================================================
-# MAIN CHAT FUNCTION
-# =========================================================
+def retrieve_context(question):
 
-def ask_question(question, pdf_text="", history=None):
+    chunks = knowledge_base.split("\n")
 
-    try:
+    scored = []
 
-        # =================================================
-        # RETRIEVE DOCUMENTS
-        # =================================================
+    question_words = question.lower().split()
 
-        docs = db.similarity_search(question, k=4)
+    for chunk in chunks:
 
-        # =================================================
-        # BUILD CONTEXT
-        # =================================================
+        score = 0
 
-        context = "\n\n".join(
-            [doc.page_content for doc in docs]
-        )
+        chunk_lower = chunk.lower()
 
-        # =================================================
-        # SOURCE CITATIONS
-        # =================================================
+        for word in question_words:
 
-        sources = []
+            if word in chunk_lower:
 
-        for doc in docs:
+                score += 1
 
-            source = doc.metadata.get(
-                "source",
-                "CloudInvent Knowledge Base"
-            )
+        scored.append((score, chunk))
 
-            sources.append(source)
+    scored.sort(reverse=True)
 
-        unique_sources = list(set(sources))
+    top_chunks = [
+        chunk for score, chunk in scored[:10]
+        if score > 0
+    ]
 
-        # =================================================
-        # CHAT HISTORY
-        # =================================================
+    return "\n".join(top_chunks)
 
-        history_text = ""
+# =====================================================
+# MAIN FUNCTION
+# =====================================================
 
-        if history:
+def ask_question(question):
 
-            recent_history = history[-6:]
+    context = retrieve_context(question)
 
-            for msg in recent_history:
+    prompt = f"""
+You are CloudInvent AI Copilot.
 
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
+Use ONLY the context below.
 
-                history_text += f"{role}: {content}\n"
+Context:
+{context}
 
-        # =================================================
-        # ENTERPRISE PROMPT
-        # =================================================
+Question:
+{question}
 
-        if not context.strip():
+Answer professionally.
+"""
 
-            return (
-            "I could not find this information "
-            "in the CloudInvent knowledge base."
-            )
+    completion = client.chat.completions.create(
 
+        model="llama-3.3-70b-versatile",
 
-        prompt = f"""
-        You are CloudInvent AI Copilot.
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
 
-        Your role:
-        - Explain CloudInvent services and capabilities
-        - Help with FinOps and cloud optimization
-        - Explain governance, compliance, and security
-        - Assist with AWS, Azure, and GCP topics
-        - Answer professionally like an enterprise consultant
+        temperature=0.3,
+    )
 
-        Behavior Guidelines:
-        - Use ONLY the provided context
-        - Never hallucinate information
-        - If answer is unavailable, clearly say:
-        'I could not find this information in the CloudInvent knowledge base.'
-        - Be concise but informative
-        - Use bullet points where appropriate
-        - Format responses professionally
-        - Prioritize clarity and accuracy
-
-        Conversation History:
-        {history_text}
-
-        PDF Context:
-        {pdf_text}
-
-        Knowledge Base Context:
-        {context}
-
-        User Question:
-        {question}
-
-        Provide a professional response below:
-        """
-
-      
-
-        # =================================================
-        # GROQ API CALL WITH STREAMING
-        # =================================================
-
-        response = client.chat.completions.create(
-
-            model="llama-3.3-70b-versatile",
-
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-
-            temperature=0.3,
-
-            max_tokens=1024,
-
-            stream=True
-        )
-
-        # =================================================
-        # STREAM RESPONSE
-        # =================================================
-
-        final_answer = ""
-
-        for chunk in response:
-
-            if chunk.choices[0].delta.content:
-
-                final_answer += chunk.choices[0].delta.content
-
-        # =================================================
-        # ADD SOURCES
-        # =================================================
-
-        if unique_sources:
-
-            final_answer += "\n\n---\n\nSources:\n"
-
-            for src in unique_sources:
-
-                final_answer += f"- {src}\n"
-
-        return final_answer
-
-    except Exception as e:
-
-        return f"Error generating response: {str(e)}"
+    return completion.choices[0].message.content
