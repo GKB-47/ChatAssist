@@ -185,21 +185,20 @@ if prompt:
             #answer = response.json()["answer"]
             #st.markdown(answer)
 
-            st.write("Status Code:", response.status_code)
-            st.write("Raw Response:")
-            st.code(response.text)
             if response.status_code != 200:
+                st.error(response.text)
+
                 st.stop()
             data = response.json()
+
             answer = data["answer"]
-
-
+            st.markdown(answer)
 
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    #"content": answer
+                    "content": answer
                 }
             )
 
