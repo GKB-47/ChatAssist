@@ -1,12 +1,22 @@
 import streamlit as st
 import requests
+import os
 
 st.set_page_config(
     page_title="CloudInvent AI Copilot",
     layout="wide"
 )
 
-st.logo("logo.png")
+
+
+logo_path = os.path.join(
+    os.path.dirname(__file__),
+    "logo.png"
+)
+
+if os.path.exists(logo_path):
+
+    st.image(logo_path, width=180)
 
 # ======================================================
 # SIMPLE LOGIN
@@ -154,8 +164,8 @@ if prompt:
                 }
 
             response = requests.post(
-                "http://127.0.0.1:8000/chat",
-                data={
+                "https://chatassist-backend-auta.onrender.com/chat",
+                json={
                     "question": prompt
                 },
                 files=files,
