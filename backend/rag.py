@@ -116,3 +116,38 @@ def ask_question(question, pdf_text=""):
     except Exception as e:
 
         return f"Groq API Error: {str(e)}"
+    
+
+# =====================================================
+# SIMPLE RETRIEVAL
+# =====================================================
+
+def retrieve_context(question):
+
+    chunks = knowledge_base.split("\n")
+
+    scored = []
+
+    question_words = question.lower().split()
+
+    for chunk in chunks:
+
+        score = 0
+
+        chunk_lower = chunk.lower()
+
+        for word in question_words:
+
+            if word in chunk_lower:
+                score += 1
+
+        scored.append((score, chunk))
+
+    scored.sort(reverse=True)
+
+    top_chunks = [
+        chunk for score, chunk in scored[:10]
+            if score > 0
+        ]
+
+    return "\n".join(top_chunks)
