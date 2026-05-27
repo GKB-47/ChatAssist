@@ -53,10 +53,10 @@ if "messages" not in st.session_state:
 # PDF UPLOAD
 # ======================================================
 
-uploaded_file = st.sidebar.file_uploader(
-    "Upload PDF",
-    type=["pdf"]
-)
+#uploaded_file = st.sidebar.file_uploader(
+#    "Upload PDF",
+#    type=["pdf"]
+#)
 
 # ======================================================
 # SAMPLE QUESTIONS
@@ -159,15 +159,15 @@ if prompt:
 
             files = None
 
-            if uploaded_file:
+            #if uploaded_file:
 
-                files = {
-                    "file": (
-                        uploaded_file.name,
-                        uploaded_file,
-                        "application/pdf"
-                    )
-                }
+            #    files = {
+            #        "file": (
+            #            uploaded_file.name,
+            #            uploaded_file,
+            #            "application/pdf"
+            #        )
+            #    }
 
             
 
@@ -178,7 +178,7 @@ if prompt:
                 data={
                     "question": prompt
                 },
-                files=files if uploaded_file else None,
+                #files=files if uploaded_file else None,
                 timeout=120
             )
 
