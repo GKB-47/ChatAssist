@@ -99,7 +99,7 @@ def ask_question(question, pdf_text=""):
 
         completion = client.chat.completions.create(
 
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
 
             messages=[
                 {
@@ -141,7 +141,7 @@ def retrieve_context(question):
             if word in chunk_lower:
                 score += 1
 
-        scored.append((score, chunk))
+        scored.append((score, chunk))   
 
     scored.sort(reverse=True)
 
