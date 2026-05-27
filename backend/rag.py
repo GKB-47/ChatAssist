@@ -43,6 +43,9 @@ def retrieve_context(question):
 
     chunks = knowledge_base.split("\n")
 
+    # Limit chunk size
+    chunks = [chunk[:300] for chunk in chunks]
+
     scored = []
 
     question_words = question.lower().split()
@@ -63,8 +66,9 @@ def retrieve_context(question):
 
     scored.sort(reverse=True)
 
+    # ONLY TOP 2 CHUNKS
     top_chunks = [
-        chunk for score, chunk in scored[:10]
+        chunk for score, chunk in scored[:2]
         if score > 0
     ]
 
@@ -77,6 +81,13 @@ def retrieve_context(question):
 def ask_question(question, pdf_text=""):
 
     context = retrieve_context(question)
+
+    if not context:
+        context = "No matching CloudInvent context found."
+
+    context = context[:1000]
+
+    pdf_text = pdf_text[:1000]
 
     prompt = f"""
     You are CloudInvent AI Copilot.
@@ -92,7 +103,7 @@ def ask_question(question, pdf_text=""):
     Question:
     {question}
 
-    Answer professionally.
+    Answer professionally in 8-10 sentences.
     """
 
     try:
@@ -108,7 +119,8 @@ def ask_question(question, pdf_text=""):
                 }
             ],
 
-            temperature=0.3,
+            temperature=0.2,
+            max_tokens=300
         )
 
         return completion.choices[0].message.content
@@ -118,36 +130,3 @@ def ask_question(question, pdf_text=""):
         return f"Groq API Error: {str(e)}"
     
 
-# =====================================================
-# SIMPLE RETRIEVAL
-# =====================================================
-
-def retrieve_context(question):
-
-    chunks = knowledge_base.split("\n")
-
-    scored = []
-
-    question_words = question.lower().split()
-
-    for chunk in chunks:
-
-        score = 0
-
-        chunk_lower = chunk.lower()
-
-        for word in question_words:
-
-            if word in chunk_lower:
-                score += 1
-
-        scored.append((score, chunk))   
-
-    scored.sort(reverse=True)
-
-    top_chunks = [
-        chunk for score, chunk in scored[:10]
-            if score > 0
-        ]
-
-    return "\n".join(top_chunks)
